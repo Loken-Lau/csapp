@@ -10,6 +10,22 @@ The code server is based on [https://github.com/cdr/code-server](https://github.
 
 ## How to Use It?
 
+### Update for Mac user (2025)
+
+Install [Colima](https://github.com/abiosoft/colima) and run docker in `arch: amd64`:
+
+```
+colima start --edit
+
+
+# Architecture of the virtual machine (x86_64, aarch64, host).
+#
+# NOTE: value cannot be changed after virtual machine is created.
+# Default: host
+-> Update here
+arch: amd64
+```
+
 ### Install Docker or Podman
 
 - [Docker Engine](https://docs.docker.com/engine/install/)
@@ -29,7 +45,10 @@ The code server is based on [https://github.com/cdr/code-server](https://github.
 
 Under the root directory.
 
-`docker run -p 7777:7777 -v "$PWD/labs:/home/csapp/project" csapp`
+```
+chmod -R a+rwx labs
+docker run -p 7777:7777 -v "$PWD/labs:/home/csapp/project" csapp
+```
 
 Then you can access your labs via browser [http://localhost:7777/](http://localhost:7777/) with password `csapp`. You can find all files in `labs` under `/home/csapp/project`.
 

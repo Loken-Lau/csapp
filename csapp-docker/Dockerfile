@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
+FROM ubuntu:25.04
 ARG arch_name=amd64
-ARG code_server_version=4.14.1
-ARG cpptools_version=1.16.3
+ARG code_server_version=4.106.2
+ARG cpptools_version=1.29.0
 ARG office_version=3.1.6
 
 RUN cp /etc/apt/sources.list /etc/apt/sources.backup.list
@@ -10,8 +10,11 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.backup.list
 # COPY sources.list /etc/apt/sources.list
 
 RUN apt-get update
-RUN apt-get install -y cmake gdb python python3 vim emacs locales
-RUN apt-get install -y curl sudo
+RUN apt-get install -y \
+    cmake gdb vim emacs locales python3 python3-dev python3-pip python3-setuptools wget \
+    curl sudo cgdb git \
+    flex bison libgetopt-complete-perl valgrind
+
 RUN useradd -m csapp && \
     echo "root ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     echo "csapp ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers 
@@ -22,25 +25,15 @@ ENV LANG=en_US.utf8 \
     LC_ALL=en_US.UTF-8
 
 # Network Packages
-RUN apt-get install -y aria2
-RUN aria2c https://github.com/coder/code-server/releases/download/v${code_server_version}/code-server_${code_server_version}_${arch_name}.deb && \
+RUN wget https://github.com/coder/code-server/releases/download/v${code_server_version}/code-server_${code_server_version}_${arch_name}.deb && \
     dpkg -i code-server_${code_server_version}_${arch_name}.deb
 
-RUN apt-get install -y net-tools
 RUN usermod -s /bin/bash csapp
 RUN chsh -s /bin/bash csapp
 ENV SHELL=/bin/bash 
 
-RUN apt-get install -y cgdb git
-
 # DataLab
 RUN if [ "${arch_name}" = "arm64" ] ; then apt-get install -y g++-multilib-arm-linux-gnueabi; else apt-get install -y g++-multilib; fi
-
-# ArchLab
-RUN apt-get install -y flex bison libgetopt-complete-perl
-
-# CacheLab
-RUN apt-get install -y valgrind
 
 USER csapp
 
@@ -50,9 +43,8 @@ ADD cweijan.vscode-office-${office_version}.vsix /home/csapp/extensions
 RUN code-server --install-extension /home/csapp/extensions/cweijan.vscode-office-${office_version}.vsix
 
 # Cpp Extension
-ADD cpptools-linux-${cpptools_version}.vsix /home/csapp/extensions
-RUN code-server --install-extension /home/csapp/extensions/cpptools-linux-${cpptools_version}.vsix
-# RUN code-server --install-extension ms-vscode.cpptools
+RUN wget https://github.com/microsoft/vscode-cpptools/releases/download/v${cpptools_version}/cpptools-linux-x64.vsix -O /home/csapp/extensions/cpptools-linux-x64.vsix
+RUN code-server --install-extension /home/csapp/extensions/cpptools-linux-x64.vsix
 
 # Formatter Extension
 RUN code-server --install-extension esbenp.prettier-vscode
@@ -61,17 +53,9 @@ RUN code-server --install-extension esbenp.prettier-vscode
 RUN code-server --install-extension yzhang.markdown-all-in-one
 
 # Material Theme Extension
-RUN code-server --install-extension equinusocio.vsc-material-theme 
+RUN code-server --install-extension vira.vsc-vira-theme 
 
 USER root
-
-# Python3-pip
-RUN apt-get update
-RUN apt-get install -y python3-dev python3-pip python3-setuptools
-
-# Fuck Extension
-RUN pip3 install thefuck
-RUN echo "eval \"\$(thefuck --alias)\" " >> /home/csapp/.bashrc
 
 RUN chown csapp -R /home/csapp/.local/share/
 
